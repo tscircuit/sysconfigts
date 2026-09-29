@@ -67,6 +67,26 @@ names, and allowed values depend on the TI device and SDK. Ordinary strings are
 string literals. Use `SysConfigReference` for references, including bracket paths:
 `new SysConfigReference({ path: ["uart1", "pins", 0, "$assign"] })`.
 
+## Inspect and preview source
+
+`inspectSysConfig(config)` returns source-ordered rows without collapsing repeated
+assignments. `generateSysConfigSvg(config)` renders a deterministic SVG with fixed
+assignments, suggestions, and unevaluated source clearly distinguished. Both accept
+parsed or authored documents and leave them unchanged. This is a source preview,
+**not a resolved pinout or TI validation**. See the
+[inspection and preview guide](docs/inspection-and-preview.md).
+
+The [CC2340 pedometer fixture](tests/fixtures/pedometer/README.md) is a documented
+transcription of supplied development notes. Its TI validation is still pending.
+From a checkout, export its SVG and round-tripped source with:
+
+```sh
+bun scripts/export-pedometer-preview.ts /tmp/sysconfig-previews
+```
+
+CI uploads these files as the `pedometer-source-preview` artifact. They are
+library-generated review artifacts, not native TI visual output.
+
 ## Write configuration tests
 
 ```ts
