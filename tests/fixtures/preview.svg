@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="448" viewBox="0 0 900 448" role="img" aria-labelledby="preview-title preview-description">
+<title id="preview-title">SysConfig source preview</title>
+<desc id="preview-description">Ordered textual settings. Suggestions are not fixed assignments. Calls, expressions and SDK defaults are not evaluated. Not TI validation.</desc>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="monospace" font-size="13" fill="#20252b">
+<text x="24" y="34" font-size="22" font-weight="bold">SysConfig source preview</text>
+<text x="24" y="62">Explicit source order, including repeated assignments. No script or SDK evaluation.</text>
+<text x="24" y="84">Not a resolved pinout or TI validation result.</text>
+<g><title>gpio = scripting.addModule(&quot;/drivers/gpio/gpio&quot;, {}, false)</title><rect x="24" y="112" width="852" height="66" fill="none" stroke="#ccc"/><text x="36" y="136" font-weight="bold">MODULE</text>
+<text xml:space="preserve" x="36" y="159">gpio = scripting.addModule(&quot;/drivers/gpio/gpio&quot;, {}, false)</text></g>
+<g><title>gpio1 = gpio.addInstance()</title><rect x="24" y="190" width="852" height="66" fill="none" stroke="#ccc"/><text x="36" y="214" font-weight="bold">INSTANCE</text>
+<text xml:space="preserve" x="36" y="237">gpio1 = gpio.addInstance()</text></g>
+<g><title>gpio1.pin.$assign = &quot;A7&quot;</title><rect x="24" y="268" width="852" height="66" fill="none" stroke="#ccc"/><text x="36" y="292" font-weight="bold">FIXED ($assign)</text>
+<text xml:space="preserve" x="36" y="315">gpio1.pin.$assign = &quot;A7&quot;</text></g>
+<g><title>gpio1.pin.$suggestSolution = &quot;B7&quot;</title><rect x="24" y="346" width="852" height="66" fill="none" stroke="#ccc"/><text x="36" y="370" font-weight="bold">SUGGESTION</text>
+<text xml:space="preserve" x="36" y="393">gpio1.pin.$suggestSolution = &quot;B7&quot;</text></g>
+</g></svg>

@@ -1,0 +1,4 @@
+const gpio = scripting.addModule("/drivers/gpio/gpio", {}, false);
+const gpio1 = gpio.addInstance();
+gpio1.pin.$assign = "A7";
+gpio1.pin.$suggestSolution = "B7";

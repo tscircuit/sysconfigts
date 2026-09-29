@@ -1,0 +1,88 @@
+import { expect, test } from "bun:test"
+import { readFileSync } from "node:fs"
+import { generateSysConfigSvg, inspectSysConfig, parseSysConfig } from "../lib"
+
+test("inspection preserves statement order, repeats, references, calls and unknown source", () => {
+  const source = [
+    'const gpio = scripting.addModule("/drivers/gpio/gpio", {}, false);',
+    "const gpio1 = gpio.addInstance();",
+    'gpio1.pin.$assign = "A7";',
+    'gpio1.pin.$assign = "B7";',
+    "gpio1.pin.$suggestSolution = other.pin;",
+    "gpio1.option = 1 + 2;",
+    "scripting.futureCall();",
+    'if (false) { gpio1.pin.$assign = "C7"; }',
+  ].join("\n")
+  const config = parseSysConfig(source)
+  const rows = inspectSysConfig(config)
+  expect(rows.map((row) => row.kind)).toEqual([
+    "module",
+    "instance",
+    "fixed_assignment",
+    "fixed_assignment",
+    "suggested_assignment",
+    "assignment",
+    "call",
+    "unknown_statement",
+  ])
+  expect(rows[2]?.expression).toBe('"A7"')
+  expect(rows[3]?.expression).toBe('"B7"')
+  expect(rows[4]?.expression).toBe("other.pin")
+  expect(rows[5]?.expression).toBe("1 + 2")
+  expect(rows[7]?.expression).toContain("if (false)")
+  const svg = generateSysConfigSvg(config)
+  expect(svg).toContain("FIXED ($assign)")
+  expect(svg).toContain("SUGGESTION")
+  expect(svg).toContain("Not a resolved pinout")
+  expect(generateSysConfigSvg(config)).toBe(svg)
+  expect(config.getString()).toBe(source)
+})
+
+test("distinguishes static bracket paths without evaluating aliases", () => {
+  const rows = inspectSysConfig(parseSysConfig('a["x.y"] = 1; a.x.y = 2;'))
+  expect(rows.map((row) => row.target)).toEqual(['a["x.y"]', "a.x.y"])
+})
+
+test("native TI fixture preview leaves its round trip untouched", () => {
+  const source = readFileSync(
+    new URL("./fixtures/am243x-benchmark.syscfg", import.meta.url),
+    "utf8",
+  )
+  const config = parseSysConfig(source)
+  expect(inspectSysConfig(config).length).toBeGreaterThan(10)
+  expect(generateSysConfigSvg(config)).toContain("SysConfig source preview")
+  expect(config.getString()).toBe(source)
+})
+
+test("SVG escapes markup and never evaluates hostile source", () => {
+  const config = parseSysConfig(
+    'a.x = "</text><script>alert(1)</script>&"; throw new Error("must not run");',
+  )
+  const svg = generateSysConfigSvg(config)
+  expect(svg).not.toContain("<script>")
+  expect(svg).toContain("&lt;script&gt;")
+  expect(svg).toContain("UNKNOWN STATEMENT")
+  expect(svg).toContain("must not run")
+})
+
+test("long paths wrap without truncation and empty input remains readable", () => {
+  const path = `a.${"p".repeat(300)}`
+  const svg = generateSysConfigSvg(parseSysConfig(`${path} = 123;`))
+  expect(svg).toContain(`<title>${path} = 123</title>`)
+  expect(svg.match(/xml:space="preserve"/g)?.length).toBeGreaterThan(3)
+  expect(generateSysConfigSvg(parseSysConfig("// comment only"))).toContain(
+    "No statements",
+  )
+})
+
+test("SVG matches the reviewed deterministic snapshot", () => {
+  const source = readFileSync(
+    new URL("./fixtures/preview.syscfg", import.meta.url),
+    "utf8",
+  )
+  const expected = readFileSync(
+    new URL("./fixtures/preview.svg", import.meta.url),
+    "utf8",
+  )
+  expect(generateSysConfigSvg(parseSysConfig(source))).toBe(expected)
+})
