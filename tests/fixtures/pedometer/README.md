@@ -32,6 +32,8 @@ filled with guessed defaults. `I2C0` is a suggestion, not a fixed assignment.
 
 Parser round-trip, controlled edits, ordered inspection, and deterministic SVG
 preview are automated tests. They do not execute scripts or TI SDK modules.
+Recorded headers, fixed pins, and suggestions are reviewed as clear text in the
+`toMatchInlineSnapshot()` assertion in [`pedometer.test.ts`](../../pedometer.test.ts).
 
 **Real TI generation, firmware compilation, and hardware execution: NOT RUN.**
 The tests do not need a TI installation. Before using this as a hardware or

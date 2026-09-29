@@ -16,8 +16,12 @@ Both APIs accept an existing `SysConfig`, including a document constructed in
 TypeScript. They have no filesystem, Circuit JSON, browser, or TI dependency.
 `generateSysConfigSvg()` returns a standalone SVG string with fixed-width text
 wrapping and escaped XML. It never embeds source as executable SVG markup.
-The output is deterministic for a given document, suitable for snapshots and CI
-artifacts. See the compact [example snapshot](../tests/fixtures/preview.svg).
+The output is deterministic for a given document and can be exported as a CI
+artifact. Tests compare inspection rows with `toMatchInlineSnapshot()` so the
+expected metadata, targets, and expressions are readable directly in the test.
+See the [compact inspection example](../tests/inspection-svg.test.ts) and
+[pedometer header and pin snapshot](../tests/pedometer.test.ts). SVG behavior is
+checked separately for escaping, wrapping, determinism, and source preservation.
 
 `inspectSysConfig()` returns ordered `{ kind, target, expression }` rows. Recorded
 `@cliArgs`, `@v2CliArgs`, and `@versions` comment lines appear as `metadata` rows,

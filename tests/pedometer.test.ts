@@ -95,36 +95,100 @@ test("pin edits are textual edits, without silently changing BLE or RTOS", () =>
   // This tests syntax preservation, not whether DIO10 is suitable for the board.
 })
 
-test("pedometer preview distinguishes suggestions and does not mutate source", () => {
+test("pedometer inspection snapshots recorded headers, fixed pins and suggestions", () => {
   const config = parseSysConfig(source)
   const rows = inspectSysConfig(config)
-  expect(rows.slice(0, 3)).toEqual([
-    {
-      kind: "metadata",
-      target: "@cliArgs",
-      expression:
-        '--device "CC2340R5RGE" --part "Default" --package "RGE" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"',
-    },
-    {
-      kind: "metadata",
-      target: "@v2CliArgs",
-      expression:
-        '--device "CC2340R5" --package "VQFN (RGE)" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"',
-    },
-    {
-      kind: "metadata",
-      target: "@versions",
-      expression: '{"tool":"1.26.3+4558"}',
-    },
-  ])
-  expect(rows.filter((row) => row.kind === "fixed_assignment")).toHaveLength(11)
-  expect(rows.filter((row) => row.kind === "suggested_assignment")).toEqual([
-    {
-      kind: "suggested_assignment",
-      target: "I2C1.i2c.$suggestSolution",
-      expression: '"I2C0"',
-    },
-  ])
+  expect(
+    rows.filter(
+      (row) =>
+        row.kind === "metadata" ||
+        row.kind === "fixed_assignment" ||
+        row.kind === "suggested_assignment",
+    ),
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "expression": "--device "CC2340R5RGE" --part "Default" --package "RGE" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"",
+        "kind": "metadata",
+        "target": "@cliArgs",
+      },
+      {
+        "expression": "--device "CC2340R5" --package "VQFN (RGE)" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"",
+        "kind": "metadata",
+        "target": "@v2CliArgs",
+      },
+      {
+        "expression": "{"tool":"1.26.3+4558"}",
+        "kind": "metadata",
+        "target": "@versions",
+      },
+      {
+        "expression": ""DIO20_A11"",
+        "kind": "fixed_assignment",
+        "target": "GPIO3.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO11"",
+        "kind": "fixed_assignment",
+        "target": "GPIO4.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO12"",
+        "kind": "fixed_assignment",
+        "target": "GPIO5.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO13"",
+        "kind": "fixed_assignment",
+        "target": "GPIO6.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO21_A10"",
+        "kind": "fixed_assignment",
+        "target": "GPIO7.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO24_A7"",
+        "kind": "fixed_assignment",
+        "target": "GPIO8.gpioPin.$assign",
+      },
+      {
+        "expression": ""DIO8"",
+        "kind": "fixed_assignment",
+        "target": "I2C1.i2c.sdaPin.$assign",
+      },
+      {
+        "expression": ""DIO6_A1_AR+"",
+        "kind": "fixed_assignment",
+        "target": "I2C1.i2c.sclPin.$assign",
+      },
+      {
+        "expression": ""LAES"",
+        "kind": "fixed_assignment",
+        "target": "AESCommonXXF3.laes.$assign",
+      },
+      {
+        "expression": ""DMA_CH4"",
+        "kind": "fixed_assignment",
+        "target": "AESCommonXXF3.laes.dataLaesChannelA.$assign",
+      },
+      {
+        "expression": ""DMA_CH5"",
+        "kind": "fixed_assignment",
+        "target": "AESCommonXXF3.laes.dataLaesChannelB.$assign",
+      },
+      {
+        "expression": ""I2C0"",
+        "kind": "suggested_assignment",
+        "target": "I2C1.i2c.$suggestSolution",
+      },
+    ]
+  `)
+  expect(config.getString()).toBe(source)
+})
+
+test("pedometer preview distinguishes suggestions and does not mutate source", () => {
+  const config = parseSysConfig(source)
   const svg = generateSysConfigSvg(config)
   expect(svg).toContain("CC2340R5RGE")
   expect(svg).toContain("simplelink_lowpower_f3_sdk@9.21.00.36")

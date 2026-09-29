@@ -173,16 +173,50 @@ test("long paths wrap without truncation and empty input remains readable", () =
   )
 })
 
-test("SVG matches the reviewed deterministic snapshot", () => {
+test("inspection matches the inline text snapshot", () => {
   const source = readFileSync(
-    new URL("./fixtures/preview.syscfg", import.meta.url),
+    new URL("./fixtures/inspection.syscfg", import.meta.url),
     "utf8",
   )
-  const expected = readFileSync(
-    new URL("./fixtures/preview.svg", import.meta.url),
-    "utf8",
-  )
-  expect(generateSysConfigSvg(parseSysConfig(source))).toBe(expected)
+  expect(inspectSysConfig(parseSysConfig(source))).toMatchInlineSnapshot(`
+    [
+      {
+        "expression": "--device "CC2340R5RGE" --product "simplelink_lowpower_f3_sdk@9.21.00.36"",
+        "kind": "metadata",
+        "target": "@cliArgs",
+      },
+      {
+        "expression": "--device "CC2340R5" --package "VQFN (RGE)"",
+        "kind": "metadata",
+        "target": "@v2CliArgs",
+      },
+      {
+        "expression": "{"tool":"1.26.3+4558"}",
+        "kind": "metadata",
+        "target": "@versions",
+      },
+      {
+        "expression": "scripting.addModule("/drivers/gpio/gpio", {}, false)",
+        "kind": "module",
+        "target": "gpio",
+      },
+      {
+        "expression": "gpio.addInstance()",
+        "kind": "instance",
+        "target": "gpio1",
+      },
+      {
+        "expression": ""A7"",
+        "kind": "fixed_assignment",
+        "target": "gpio1.pin.$assign",
+      },
+      {
+        "expression": ""B7"",
+        "kind": "suggested_assignment",
+        "target": "gpio1.pin.$suggestSolution",
+      },
+    ]
+  `)
 })
 
 test("SVG replaces invalid XML characters without changing authored source", () => {
