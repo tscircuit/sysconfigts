@@ -1,0 +1,9 @@
+/**
+ * @cliArgs --device "CC2340R5RGE" --product "simplelink_lowpower_f3_sdk@9.21.00.36"
+ * @v2CliArgs --device "CC2340R5" --package "VQFN (RGE)"
+ * @versions {"tool":"1.26.3+4558"}
+ */
+const gpio = scripting.addModule("/drivers/gpio/gpio", {}, false);
+const gpio1 = gpio.addInstance();
+gpio1.pin.$assign = "A7";
+gpio1.pin.$suggestSolution = "B7";

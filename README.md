@@ -67,6 +67,19 @@ names, and allowed values depend on the TI device and SDK. Ordinary strings are
 string literals. Use `SysConfigReference` for references, including bracket paths:
 `new SysConfigReference({ path: ["uart1", "pins", 0, "$assign"] })`.
 
+## Inspect source
+
+`inspectSysConfig(config)` returns source-ordered rows without collapsing repeated
+assignments, plus recorded `@cliArgs`, `@v2CliArgs`, and `@versions` metadata.
+It distinguishes fixed assignments, suggestions, and unevaluated source, accepts
+parsed or authored documents, and leaves them unchanged. Tests use
+`toMatchInlineSnapshot()` to show expected inspection rows as clear text.
+Inspection reports source statements without resolving pins or validating TI
+settings. See the [inspection guide](docs/inspection.md).
+
+The [CC2340 pedometer fixture](tests/fixtures/pedometer/README.md) is a documented
+transcription of supplied development notes. Its TI validation is still pending.
+
 ## Write configuration tests
 
 ```ts

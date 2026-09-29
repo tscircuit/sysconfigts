@@ -11,6 +11,10 @@ export {
   toExpression,
   UnknownSysConfigExpression,
 } from "./expressions"
+export {
+  inspectSysConfig,
+  type SysConfigInspectionRow,
+} from "./inspection/inspect-sysconfig"
 export { parseSysConfig, SysConfigParseError } from "./parse-sysconfig"
 export type { DeclarationKind } from "./statements"
 export {

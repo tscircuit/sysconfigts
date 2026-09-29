@@ -8,6 +8,9 @@ on:
       - main
       - '!version-bumps/**'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,11 +33,3 @@ jobs:
 
       - name: Run tests
         run: bun test
-
-      - name: Upload snapshot artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-snapshots
-          path: tests/**/__snapshots__/*.diff.png
-          if-no-files-found: ignore
