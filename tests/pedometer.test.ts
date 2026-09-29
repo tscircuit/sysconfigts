@@ -1,11 +1,6 @@
 import { expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
-import {
-  generateSysConfigSvg,
-  inspectSysConfig,
-  parseSysConfig,
-  SysConfigLiteral,
-} from "../lib"
+import { inspectSysConfig, parseSysConfig, SysConfigLiteral } from "../lib"
 
 const source = readFileSync(
   new URL("./fixtures/pedometer/pedometer.syscfg", import.meta.url),
@@ -184,22 +179,7 @@ test("pedometer inspection snapshots recorded headers, fixed pins and suggestion
       },
     ]
   `)
-  expect(config.getString()).toBe(source)
-})
-
-test("pedometer preview distinguishes suggestions and does not mutate source", () => {
-  const config = parseSysConfig(source)
-  const svg = generateSysConfigSvg(config)
-  expect(svg).toContain("CC2340R5RGE")
-  expect(svg).toContain("simplelink_lowpower_f3_sdk@9.21.00.36")
-  expect(svg).toContain("1.26.3+4558")
-  expect(svg.indexOf("METADATA (RECORDED)")).toBeLessThan(svg.indexOf("MODULE"))
-  expect(svg).toContain("DIO6_A1_AR+")
-  expect(svg).toContain("CONFIG_DISPLAY_ISOLATE")
-  expect(svg).toContain("FreeRTOS.heapSize")
-  expect(svg).toContain("SUGGESTION")
-  expect(svg).toContain("Not a resolved pinout")
-  expect(generateSysConfigSvg(config)).toBe(svg)
-  expect(generateSysConfigSvg(parseSysConfig(config.getString()))).toBe(svg)
+  expect(inspectSysConfig(config)).toEqual(rows)
+  expect(inspectSysConfig(parseSysConfig(config.getString()))).toEqual(rows)
   expect(config.getString()).toBe(source)
 })

@@ -25,5 +25,4 @@ export {
   SysConfigModule,
   UnknownSysConfigStatement,
 } from "./statements"
-export { generateSysConfigSvg } from "./svg-gen/generate-sysconfig-svg"
 export { SysConfig } from "./sysconfig"

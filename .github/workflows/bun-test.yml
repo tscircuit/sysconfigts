@@ -33,22 +33,3 @@ jobs:
 
       - name: Run tests
         run: bun test
-
-      - name: Export pedometer source preview (not TI validation)
-        run: bun scripts/export-pedometer-preview.ts "$RUNNER_TEMP/sysconfig-previews"
-
-      - name: Upload pedometer source preview
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pedometer-source-preview
-          path: ${{ runner.temp }}/sysconfig-previews/
-          if-no-files-found: ignore
-
-      - name: Upload snapshot artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-snapshots
-          path: tests/**/__snapshots__/*.diff.png
-          if-no-files-found: ignore

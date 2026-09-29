@@ -1,12 +1,6 @@
 import { expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
-import {
-  generateSysConfigSvg,
-  inspectSysConfig,
-  parseSysConfig,
-  SysConfig,
-  UnknownSysConfigStatement,
-} from "../lib"
+import { inspectSysConfig, parseSysConfig } from "../lib"
 
 test("inspection preserves statement order, repeats, references, calls and unknown source", () => {
   const source = [
@@ -36,11 +30,8 @@ test("inspection preserves statement order, repeats, references, calls and unkno
   expect(rows[4]?.expression).toBe("other.pin")
   expect(rows[5]?.expression).toBe("1 + 2")
   expect(rows[7]?.expression).toContain("if (false)")
-  const svg = generateSysConfigSvg(config)
-  expect(svg).toContain("FIXED ($assign)")
-  expect(svg).toContain("SUGGESTION")
-  expect(svg).toContain("Not a resolved pinout")
-  expect(generateSysConfigSvg(config)).toBe(svg)
+  expect(inspectSysConfig(config)).toEqual(rows)
+  expect(inspectSysConfig(parseSysConfig(config.getString()))).toEqual(rows)
   expect(config.getString()).toBe(source)
 })
 
@@ -49,7 +40,7 @@ test("distinguishes static bracket paths without evaluating aliases", () => {
   expect(rows.map((row) => row.target)).toEqual(['a["x.y"]', "a.x.y"])
 })
 
-test("Unicode targets parse, inspect, preview and serialize without losing source", () => {
+test("Unicode targets parse, inspect and serialize without losing source", () => {
   for (const target of [
     "π.gpioPin.$assign",
     String.raw`\u03c0.gpioPin.$assign`,
@@ -62,9 +53,6 @@ test("Unicode targets parse, inspect, preview and serialize without losing sourc
     expect(inspectSysConfig(config)).toEqual([
       { kind: "fixed_assignment", target, expression: '"DIO8"' },
     ])
-    const svg = generateSysConfigSvg(config)
-    expect(svg).toContain(target.replaceAll("'", "&apos;"))
-    expect(svg).toContain("DIO8")
     expect(config.getString()).toBe(source)
   }
 })
@@ -124,53 +112,58 @@ test("metadata headers are ordered textual rows while ordinary comments stay omi
   expect(config.getString()).toBe(source)
 })
 
-test("metadata changes affect the preview and header-only SVG escapes recorded text", () => {
+test("metadata changes affect inspection and header-only input preserves recorded text", () => {
   const source = '// @cliArgs --device "first"\na.x = 1;'
-  expect(generateSysConfigSvg(parseSysConfig(source))).not.toBe(
-    generateSysConfigSvg(parseSysConfig(source.replace("first", "second"))),
+  expect(inspectSysConfig(parseSysConfig(source))).not.toEqual(
+    inspectSysConfig(parseSysConfig(source.replace("first", "second"))),
   )
   const header = '/* @versions {"tool":"<script>&"} */'
   const config = parseSysConfig(header)
-  const svg = generateSysConfigSvg(config)
-  expect(svg).toContain("METADATA (RECORDED)")
-  expect(svg).toContain(
-    "@versions {&quot;tool&quot;:&quot;&lt;script&gt;&amp;&quot;}",
-  )
-  expect(svg).not.toContain("<script>")
-  expect(svg).not.toContain("No statements")
+  expect(inspectSysConfig(config)).toEqual([
+    {
+      kind: "metadata",
+      target: "@versions",
+      expression: '{"tool":"<script>&"}',
+    },
+  ])
   expect(config.getString()).toBe(header)
 })
 
-test("native TI fixture preview leaves its round trip untouched", () => {
+test("native TI fixture inspection leaves its round trip untouched", () => {
   const source = readFileSync(
     new URL("./fixtures/am243x-benchmark.syscfg", import.meta.url),
     "utf8",
   )
   const config = parseSysConfig(source)
   expect(inspectSysConfig(config).length).toBeGreaterThan(10)
-  expect(generateSysConfigSvg(config)).toContain("SysConfig source preview")
   expect(config.getString()).toBe(source)
 })
 
-test("SVG escapes markup and never evaluates hostile source", () => {
+test("inspection preserves markup and never evaluates hostile source", () => {
   const config = parseSysConfig(
     'a.x = "</text><script>alert(1)</script>&"; throw new Error("must not run");',
   )
-  const svg = generateSysConfigSvg(config)
-  expect(svg).not.toContain("<script>")
-  expect(svg).toContain("&lt;script&gt;")
-  expect(svg).toContain("UNKNOWN STATEMENT")
-  expect(svg).toContain("must not run")
+  expect(inspectSysConfig(config)).toEqual([
+    {
+      kind: "assignment",
+      target: "a.x",
+      expression: '"</text><script>alert(1)</script>&"',
+    },
+    {
+      kind: "unknown_statement",
+      target: "",
+      expression: 'throw new Error("must not run");',
+    },
+  ])
 })
 
-test("long paths wrap without truncation and empty input remains readable", () => {
+test("inspection retains long paths and omits empty input and ordinary comments", () => {
   const path = `a.${"p".repeat(300)}`
-  const svg = generateSysConfigSvg(parseSysConfig(`${path} = 123;`))
-  expect(svg).toContain(`<title>${path} = 123</title>`)
-  expect(svg.match(/xml:space="preserve"/g)?.length).toBeGreaterThan(3)
-  expect(generateSysConfigSvg(parseSysConfig("// comment only"))).toContain(
-    "No statements",
-  )
+  expect(inspectSysConfig(parseSysConfig(`${path} = 123;`))).toEqual([
+    { kind: "assignment", target: path, expression: "123" },
+  ])
+  expect(inspectSysConfig(parseSysConfig(""))).toEqual([])
+  expect(inspectSysConfig(parseSysConfig("// comment only"))).toEqual([])
 })
 
 test("inspection matches the inline text snapshot", () => {
@@ -217,21 +210,4 @@ test("inspection matches the inline text snapshot", () => {
       },
     ]
   `)
-})
-
-test("SVG replaces invalid XML characters without changing authored source", () => {
-  const invalidCodePoints = [0, 8, 11, 12, 0xfffe, 0xffff, 0xd800]
-  const source = `${String.fromCodePoint(...invalidCodePoints)} <>&"'🙂`
-  const config = new SysConfig({
-    nodes: [new UnknownSysConfigStatement({ source })],
-  })
-  const svg = generateSysConfigSvg(config)
-  const svgCodePoints = Array.from(svg, (character) => character.codePointAt(0))
-  for (const codePoint of invalidCodePoints) {
-    expect(svgCodePoints).not.toContain(codePoint)
-  }
-  expect(svg.isWellFormed()).toBe(true)
-  expect(svg).toContain("\ufffd")
-  expect(svg).toContain("&lt;&gt;&amp;&quot;&apos;🙂")
-  expect(config.getString()).toBe(source)
 })

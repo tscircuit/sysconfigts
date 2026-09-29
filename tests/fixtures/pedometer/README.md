@@ -30,8 +30,8 @@ filled with guessed defaults. `I2C0` is a suggestion, not a fixed assignment.
 
 ## Verification scope
 
-Parser round-trip, controlled edits, ordered inspection, and deterministic SVG
-preview are automated tests. They do not execute scripts or TI SDK modules.
+Parser round-trip, controlled edits, and ordered inspection are automated tests.
+They do not execute scripts or TI SDK modules.
 Recorded headers, fixed pins, and suggestions are reviewed as clear text in the
 `toMatchInlineSnapshot()` assertion in [`pedometer.test.ts`](../../pedometer.test.ts).
 
@@ -40,5 +40,5 @@ The tests do not need a TI installation. Before using this as a hardware or
 converter acceptance baseline, open the original or this documented copy in
 CCStudio with the recorded SDK/tool, verify the actual pedometer wiring, save
 it, generate configuration code, and repeat for the round-tripped copy. Preserve
-the native export, diagnostics, and generated outputs independently. A preview
-SVG is not a resolved pinout or evidence of TI acceptance.
+the native export, diagnostics, and generated outputs independently. Passing
+parser and inspection tests does not establish TI acceptance.
