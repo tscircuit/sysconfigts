@@ -1,6 +1,12 @@
 import { expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
-import { generateSysConfigSvg, inspectSysConfig, parseSysConfig } from "../lib"
+import {
+  generateSysConfigSvg,
+  inspectSysConfig,
+  parseSysConfig,
+  SysConfig,
+  UnknownSysConfigStatement,
+} from "../lib"
 
 test("inspection preserves statement order, repeats, references, calls and unknown source", () => {
   const source = [
@@ -85,4 +91,19 @@ test("SVG matches the reviewed deterministic snapshot", () => {
     "utf8",
   )
   expect(generateSysConfigSvg(parseSysConfig(source))).toBe(expected)
+})
+
+test("SVG replaces invalid XML characters without changing authored source", () => {
+  const invalidCodePoints = [0, 8, 11, 12, 0xfffe, 0xffff, 0xd800]
+  const source = `${String.fromCodePoint(...invalidCodePoints)} <>&"'🙂`
+  const config = new SysConfig({
+    nodes: [new UnknownSysConfigStatement({ source })],
+  })
+  const svg = generateSysConfigSvg(config)
+  for (const codePoint of invalidCodePoints) {
+    expect(svg).not.toContain(String.fromCodePoint(codePoint))
+  }
+  expect(svg).toContain("\ufffd")
+  expect(svg).toContain("&lt;&gt;&amp;&quot;&apos;🙂")
+  expect(config.getString()).toBe(source)
 })

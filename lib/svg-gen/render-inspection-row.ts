@@ -11,24 +11,33 @@ const labels: Record<SysConfigInspectionRow["kind"], string> = {
   unknown_statement: "UNKNOWN STATEMENT",
 }
 
+function escapeSvgCharacter(character: string): string {
+  const codePoint = character.codePointAt(0) ?? 0xfffd
+  if (
+    (codePoint < 0x20 && ![9, 10, 13].includes(codePoint)) ||
+    codePoint === 0xfffe ||
+    codePoint === 0xffff
+  ) {
+    return "\ufffd"
+  }
+  switch (character) {
+    case "&":
+      return "&amp;"
+    case "<":
+      return "&lt;"
+    case ">":
+      return "&gt;"
+    case '"':
+      return "&quot;"
+    case "'":
+      return "&apos;"
+    default:
+      return character
+  }
+}
+
 function escapeSvgText(text: string): string {
-  return text
-    .toWellFormed()
-    .replace(/[&<>"']/g, (character) => {
-      switch (character) {
-        case "&":
-          return "&amp;"
-        case "<":
-          return "&lt;"
-        case ">":
-          return "&gt;"
-        case '"':
-          return "&quot;"
-        default:
-          return "&apos;"
-      }
-    })
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, "\ufffd")
+  return Array.from(text.toWellFormed(), escapeSvgCharacter).join("")
 }
 
 function wrapSource(source: string): string[] {
@@ -45,7 +54,9 @@ function wrapSource(source: string): string[] {
 }
 
 export function renderInspectionRow(row: SysConfigInspectionRow, top: number) {
-  const source = row.target ? `${row.target} = ${row.expression}` : row.expression
+  const source = row.target
+    ? `${row.target} = ${row.expression}`
+    : row.expression
   const lines = wrapSource(source)
   const height = 48 + lines.length * 18
   const heading = `<text x="36" y="${top + 24}" font-weight="bold">${labels[row.kind]}</text>`

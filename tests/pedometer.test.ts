@@ -82,9 +82,7 @@ test("one GPIO-name edit preserves unrelated source byte-for-byte", () => {
   const config = parseSysConfig(source)
   config.setValue("GPIO8.$name", "CONFIG_USER_BUTTON")
   const edited = config.getString()
-  expect(edited).toBe(
-    source.replace('"CONFIG_BUTTON"', '"CONFIG_USER_BUTTON"'),
-  )
+  expect(edited).toBe(source.replace('"CONFIG_BUTTON"', '"CONFIG_USER_BUTTON"'))
   expect(parseSysConfig(edited).getString()).toBe(edited)
 })
 
@@ -100,9 +98,7 @@ test("pin edits are textual edits, without silently changing BLE or RTOS", () =>
 test("pedometer preview distinguishes suggestions and does not mutate source", () => {
   const config = parseSysConfig(source)
   const rows = inspectSysConfig(config)
-  expect(rows.filter((row) => row.kind === "fixed_assignment")).toHaveLength(
-    11,
-  )
+  expect(rows.filter((row) => row.kind === "fixed_assignment")).toHaveLength(11)
   expect(rows.filter((row) => row.kind === "suggested_assignment")).toEqual([
     {
       kind: "suggested_assignment",
