@@ -70,7 +70,8 @@ string literals. Use `SysConfigReference` for references, including bracket path
 ## Inspect and preview source
 
 `inspectSysConfig(config)` returns source-ordered rows without collapsing repeated
-assignments. `generateSysConfigSvg(config)` renders a deterministic SVG with fixed
+assignments, plus recorded `@cliArgs`, `@v2CliArgs`, and `@versions` metadata.
+`generateSysConfigSvg(config)` renders a deterministic SVG with those headers, fixed
 assignments, suggestions, and unevaluated source clearly distinguished. Both accept
 parsed or authored documents and leave them unchanged. This is a source preview,
 **not a resolved pinout or TI validation**. See the

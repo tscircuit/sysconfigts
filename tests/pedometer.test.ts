@@ -98,6 +98,25 @@ test("pin edits are textual edits, without silently changing BLE or RTOS", () =>
 test("pedometer preview distinguishes suggestions and does not mutate source", () => {
   const config = parseSysConfig(source)
   const rows = inspectSysConfig(config)
+  expect(rows.slice(0, 3)).toEqual([
+    {
+      kind: "metadata",
+      target: "@cliArgs",
+      expression:
+        '--device "CC2340R5RGE" --part "Default" --package "RGE" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"',
+    },
+    {
+      kind: "metadata",
+      target: "@v2CliArgs",
+      expression:
+        '--device "CC2340R5" --package "VQFN (RGE)" --rtos "freertos" --product "simplelink_lowpower_f3_sdk@9.21.00.36"',
+    },
+    {
+      kind: "metadata",
+      target: "@versions",
+      expression: '{"tool":"1.26.3+4558"}',
+    },
+  ])
   expect(rows.filter((row) => row.kind === "fixed_assignment")).toHaveLength(11)
   expect(rows.filter((row) => row.kind === "suggested_assignment")).toEqual([
     {
@@ -107,6 +126,10 @@ test("pedometer preview distinguishes suggestions and does not mutate source", (
     },
   ])
   const svg = generateSysConfigSvg(config)
+  expect(svg).toContain("CC2340R5RGE")
+  expect(svg).toContain("simplelink_lowpower_f3_sdk@9.21.00.36")
+  expect(svg).toContain("1.26.3+4558")
+  expect(svg.indexOf("METADATA (RECORDED)")).toBeLessThan(svg.indexOf("MODULE"))
   expect(svg).toContain("DIO6_A1_AR+")
   expect(svg).toContain("CONFIG_DISPLAY_ISOLATE")
   expect(svg).toContain("FreeRTOS.heapSize")

@@ -1,6 +1,7 @@
 import type { SysConfigInspectionRow } from "../inspection/inspect-sysconfig"
 
 const labels: Record<SysConfigInspectionRow["kind"], string> = {
+  metadata: "METADATA (RECORDED)",
   module: "MODULE",
   instance: "INSTANCE",
   assignment: "SETTING",
@@ -54,9 +55,12 @@ function wrapSource(source: string): string[] {
 }
 
 export function renderInspectionRow(row: SysConfigInspectionRow, top: number) {
-  const source = row.target
-    ? `${row.target} = ${row.expression}`
-    : row.expression
+  const source =
+    row.kind === "metadata"
+      ? `${row.target} ${row.expression}`.trimEnd()
+      : row.target
+        ? `${row.target} = ${row.expression}`
+        : row.expression
   const lines = wrapSource(source)
   const height = 48 + lines.length * 18
   const heading = `<text x="36" y="${top + 24}" font-weight="bold">${labels[row.kind]}</text>`

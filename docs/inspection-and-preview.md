@@ -19,12 +19,19 @@ wrapping and escaped XML. It never embeds source as executable SVG markup.
 The output is deterministic for a given document, suitable for snapshots and CI
 artifacts. See the compact [example snapshot](../tests/fixtures/preview.svg).
 
-`inspectSysConfig()` returns ordered `{ kind, target, expression }` rows. Trivia
-is omitted, but repeated assignments are retained. `$assign` is labeled
+`inspectSysConfig()` returns ordered `{ kind, target, expression }` rows. Recorded
+`@cliArgs`, `@v2CliArgs`, and `@versions` comment lines appear as `metadata` rows,
+with the header name as `target` and its remaining text as `expression`. They stay
+in source order (normally at the top), so device, package, SDK, and tool strings
+are visible in the SVG. Header contents are shown as text, without parsing CLI
+arguments or version JSON. Other trivia is omitted; repeated headers and
+assignments are retained. `$assign` is labeled
 `fixed_assignment`; `$suggestSolution` is `suggested_assignment`. Modules,
 instances, declarations, calls, and unknown statements remain distinguishable.
-Static paths are rendered canonically without resolving aliases. Expressions
-are shown as source; neither API edits the document or computes effective values.
+Assignment targets and expressions use their existing nodes' `toSource()` output,
+preserving parsed spelling, Unicode identifiers, and bracket notation without
+resolving aliases. New or structurally edited nodes use the serializer's normal
+formatting. Neither API edits the document or computes effective values.
 
 **This is a source preview, not a physical pinout or TI validation result.**
 Assignments inside unsupported control flow remain visible as unknown source,

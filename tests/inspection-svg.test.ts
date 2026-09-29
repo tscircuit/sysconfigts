@@ -49,6 +49,98 @@ test("distinguishes static bracket paths without evaluating aliases", () => {
   expect(rows.map((row) => row.target)).toEqual(['a["x.y"]', "a.x.y"])
 })
 
+test("Unicode targets parse, inspect, preview and serialize without losing source", () => {
+  for (const target of [
+    "π.gpioPin.$assign",
+    String.raw`\u03c0.gpioPin.$assign`,
+    "π [ 'gpioPin' ] .$assign",
+  ]) {
+    const source = `${target} = "DIO8";\n`
+    const config = parseSysConfig(source)
+    expect(config.assignments).toHaveLength(1)
+    expect(config.getString()).toBe(source)
+    expect(inspectSysConfig(config)).toEqual([
+      { kind: "fixed_assignment", target, expression: '"DIO8"' },
+    ])
+    const svg = generateSysConfigSvg(config)
+    expect(svg).toContain(target.replaceAll("'", "&apos;"))
+    expect(svg).toContain("DIO8")
+    expect(config.getString()).toBe(source)
+  }
+})
+
+test("metadata headers are ordered textual rows while ordinary comments stay omitted", () => {
+  const source = [
+    "/**",
+    " * Ordinary comment mentioning @cliArgs is not a header.",
+    ' * @cliArgs --device "CC2340R5RGE"',
+    ' * @v2CliArgs --device "CC2340R5"',
+    " * @versions unparsed recorded text",
+    ' * @cliArgsExtra --device "ignored"',
+    " */",
+    "a.x = 1;",
+    '// @cliArgs --device "another target"',
+    '/* @versions {"tool":"1.26.3+4558"} */',
+    'a.text = "@versions is only a string";',
+  ].join("\r\n")
+  const config = parseSysConfig(source)
+  const rows = inspectSysConfig(config)
+  expect(rows.map((row) => row.kind)).toEqual([
+    "metadata",
+    "metadata",
+    "metadata",
+    "assignment",
+    "metadata",
+    "metadata",
+    "assignment",
+  ])
+  expect(rows.filter((row) => row.kind === "metadata")).toEqual([
+    {
+      kind: "metadata",
+      target: "@cliArgs",
+      expression: '--device "CC2340R5RGE"',
+    },
+    {
+      kind: "metadata",
+      target: "@v2CliArgs",
+      expression: '--device "CC2340R5"',
+    },
+    {
+      kind: "metadata",
+      target: "@versions",
+      expression: "unparsed recorded text",
+    },
+    {
+      kind: "metadata",
+      target: "@cliArgs",
+      expression: '--device "another target"',
+    },
+    {
+      kind: "metadata",
+      target: "@versions",
+      expression: '{"tool":"1.26.3+4558"}',
+    },
+  ])
+  expect(config.getString()).toBe(source)
+})
+
+test("metadata changes affect the preview and header-only SVG escapes recorded text", () => {
+  const source = '// @cliArgs --device "first"\na.x = 1;'
+  expect(generateSysConfigSvg(parseSysConfig(source))).not.toBe(
+    generateSysConfigSvg(parseSysConfig(source.replace("first", "second"))),
+  )
+  const header = '/* @versions {"tool":"<script>&"} */'
+  const config = parseSysConfig(header)
+  const svg = generateSysConfigSvg(config)
+  expect(svg).toContain("METADATA (RECORDED)")
+  expect(svg).toContain(
+    "@versions {&quot;tool&quot;:&quot;&lt;script&gt;&amp;&quot;}",
+  )
+  expect(svg).not.toContain("<script>")
+  expect(svg).not.toContain("No statements")
+  expect(config.getString()).toBe(header)
+})
+
 test("native TI fixture preview leaves its round trip untouched", () => {
   const source = readFileSync(
     new URL("./fixtures/am243x-benchmark.syscfg", import.meta.url),

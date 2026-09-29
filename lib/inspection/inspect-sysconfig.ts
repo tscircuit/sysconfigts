@@ -1,5 +1,4 @@
 import { SysConfigTrivia } from "../base-node"
-import { SysConfigReference } from "../expressions"
 import {
   SysConfigAssignment,
   SysConfigCallStatement,
@@ -11,6 +10,7 @@ import type { SysConfig } from "../sysconfig"
 
 export interface SysConfigInspectionRow {
   kind:
+    | "metadata"
     | "module"
     | "instance"
     | "assignment"
@@ -21,6 +21,29 @@ export interface SysConfigInspectionRow {
     | "unknown_statement"
   target: string
   expression: string
+}
+
+function inspectMetadata(trivia: SysConfigTrivia): SysConfigInspectionRow[] {
+  const rows: SysConfigInspectionRow[] = []
+  const comments = trivia
+    .toSource()
+    .matchAll(/\/\*([\s\S]*?)\*\/|\/\/([^\r\n]*)/g)
+  for (const comment of comments) {
+    const commentText = comment[1] ?? comment[2]!
+    for (const line of commentText.split(/\r\n|\r|\n/)) {
+      const header = line.match(
+        /^\s*\*?\s*(@(?:cliArgs|v2CliArgs|versions))(?=\s|$)(.*)$/,
+      )
+      if (header) {
+        rows.push({
+          kind: "metadata",
+          target: header[1]!,
+          expression: header[2]!.trim(),
+        })
+      }
+    }
+  }
+  return rows
 }
 
 function getAssignmentKind(assignment: SysConfigAssignment) {
@@ -37,12 +60,12 @@ function getAssignmentKind(assignment: SysConfigAssignment) {
 /** Ordered textual facts, not an evaluated device configuration. No aliases are resolved. */
 export function inspectSysConfig(config: SysConfig): SysConfigInspectionRow[] {
   return config.nodes.flatMap((node): SysConfigInspectionRow[] => {
-    if (node instanceof SysConfigTrivia) return []
+    if (node instanceof SysConfigTrivia) return inspectMetadata(node)
     if (node instanceof SysConfigAssignment) {
       return [
         {
           kind: getAssignmentKind(node),
-          target: new SysConfigReference({ path: node.target.path }).toSource(),
+          target: node.target.toSource(),
           expression: node.value.toSource(),
         },
       ]
