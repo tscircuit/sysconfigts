@@ -100,9 +100,11 @@ test("SVG replaces invalid XML characters without changing authored source", () 
     nodes: [new UnknownSysConfigStatement({ source })],
   })
   const svg = generateSysConfigSvg(config)
+  const svgCodePoints = Array.from(svg, (character) => character.codePointAt(0))
   for (const codePoint of invalidCodePoints) {
-    expect(svg).not.toContain(String.fromCodePoint(codePoint))
+    expect(svgCodePoints).not.toContain(codePoint)
   }
+  expect(svg.isWellFormed()).toBe(true)
   expect(svg).toContain("\ufffd")
   expect(svg).toContain("&lt;&gt;&amp;&quot;&apos;🙂")
   expect(config.getString()).toBe(source)
