@@ -62,7 +62,14 @@ export class SysConfigReference extends SysConfigExpression {
     )
   }
   equals(other: SysConfigReference): boolean {
-    return JSON.stringify(this.path) === JSON.stringify(other.path)
+    return (
+      this.path.length === other.path.length &&
+      this.path.every((key, index) =>
+        index === 0
+          ? key === other.path[index]
+          : String(key) === String(other.path[index]),
+      )
+    )
   }
 }
 
