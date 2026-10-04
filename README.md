@@ -43,6 +43,9 @@ static property path. It does not execute JavaScript, resolve aliases, evaluate
 expressions, or calculate the effective device configuration. `setValue()` updates
 that assignment, or appends one when absent. Keep this distinction in mind when
 writing tests for handwritten scripts with branches or later SDK calls.
+Static property keys follow JavaScript's string-key identity: `items[0]` and
+`items["0"]` address the same path, while `items["00"]` remains distinct.
+Lookup and editing preserve the original spelling and surrounding source.
 
 ## Author a configuration
 
