@@ -1,0 +1,1 @@
+export const MAX_SYSCONFIG_SOURCE_BYTES = 4 * 1024 * 1024
