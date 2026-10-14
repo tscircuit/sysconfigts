@@ -5,16 +5,32 @@
   "type": "module",
   "module": "lib/index.ts",
   "types": "lib/index.ts",
-  "exports": "./lib/index.ts",
-  "files": ["lib"],
+  "exports": {
+    ".": "./lib/index.ts",
+    "./url": "./lib/url/index.ts"
+  },
+  "files": [
+    "lib"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/tscircuit/sysconfigts.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tscircuit/sysconfigts.git"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "format": "biome check --write .",
     "format:check": "biome check ."
   },
-  "dependencies": { "acorn": "^8.15.0" },
-  "devDependencies": { "@biomejs/biome": "2.5.14", "@types/bun": "latest", "typescript": "^5.9.3" }
+  "dependencies": {
+    "acorn": "^8.15.0",
+    "fflate": "^0.8.3",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  }
 }

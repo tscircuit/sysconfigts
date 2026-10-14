@@ -169,3 +169,25 @@ SDK-aware validation.
 ## License
 
 MIT for this library. TI fixtures retain their upstream BSD-3-Clause license.
+
+## Viewer URL transport
+
+The public `sysconfigts/url` export creates and decodes version 2 gzip/base64
+viewer URLs in Bun or a browser bundler, without vendor UI assets, device
+metadata, a TI installation, or executing configuration source:
+
+```ts
+import { createSysConfigViewerUrl } from "sysconfigts/url"
+
+const url = await createSysConfigViewerUrl({
+  schema_version: 2,
+  filename: "board.syscfg",
+  source: await Bun.file("board.syscfg").text(),
+}, "https://your-viewer.example/")
+```
+
+The base address is supplied by the caller. The exact source, Unicode and line
+endings are preserved inside a bounded URL fragment. Anyone with the complete
+URL can decode its source. Encoding is not syntax, target or TI validation.
+Optional `sdk_catalog` is opaque renderer-specific metadata; the receiving
+viewer must validate it before rendering. No metadata is bundled in this module.
