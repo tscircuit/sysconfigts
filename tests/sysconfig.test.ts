@@ -178,6 +178,61 @@ describe("typed authoring and inspection", () => {
     expect(() => new SysConfigLiteral({ value: NaN }).toSource()).toThrow(
       "finite",
     )
+    expect(() =>
+      new SysConfigReference({ path: ["a", Number.NaN] }).toSource(),
+    ).toThrow("finite")
+    expect(() =>
+      new SysConfigReference({
+        path: ["a", Number.POSITIVE_INFINITY],
+      }).toSource(),
+    ).toThrow("finite")
+  })
+  test("renders Unicode references, reserved property names, and signed-zero bracket keys", () => {
+    expect(
+      new SysConfigReference({ path: "π.gpioPin.$assign" }).toSource(),
+    ).toBe("π.gpioPin.$assign")
+    expect(new SysConfigReference({ path: "a.default" }).toSource()).toBe(
+      "a.default",
+    )
+    expect(() =>
+      new SysConfigReference({ path: "default.x" }).toSource(),
+    ).toThrow("identifier")
+    const doc = parseSysConfig('a[-0].$assign = "PIN0"; a[0].$assign = "PIN1";')
+    expect(
+      (
+        doc.getAssignment(
+          new SysConfigReference({ path: ["a", -0, "$assign"] }),
+        )!.value as SysConfigLiteral
+      ).value,
+    ).toBe("PIN0")
+    expect(
+      new SysConfigReference({ path: ["a", -0, "$assign"] }).toSource(),
+    ).toBe("a[-0].$assign")
+  })
+  test("avoids stray semicolons after header-only trivia or terminated statements while guarding comment-ending semicolons", () => {
+    const headerOnly = parseSysConfig('/** @cliArgs --device "AM243x" */\n')
+    headerOnly.setValue("π.gpioPin.$assign", "DIO9")
+    expect(headerOnly.getString()).toBe(
+      '/** @cliArgs --device "AM243x" */\nπ.gpioPin.$assign = "DIO9";',
+    )
+
+    const terminatedWithComment = parseSysConfig("a.x = 1; // trailing\n")
+    terminatedWithComment.setValue("a.y", 2)
+    expect(terminatedWithComment.getString()).toBe(
+      "a.x = 1; // trailing\na.y = 2;",
+    )
+
+    const unterminatedWithSemicolonInComment = parseSysConfig(
+      "a.x = 1 // see foo();",
+    )
+    unterminatedWithSemicolonInComment.setValue("a.y", 2)
+    expect(unterminatedWithSemicolonInComment.getString()).toBe(
+      "a.x = 1 // see foo();\n;\na.y = 2;",
+    )
+    expect(
+      parseSysConfig(unterminatedWithSemicolonInComment.getString())
+        .assignments,
+    ).toHaveLength(2)
   })
 })
 

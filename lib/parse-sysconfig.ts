@@ -75,9 +75,17 @@ export function parseSysConfig(source: string): SysConfig {
           : node.computed &&
               property.type === "Literal" &&
               (typeof property.value === "string" ||
-                typeof property.value === "number")
+                (typeof property.value === "number" &&
+                  Number.isFinite(property.value)))
             ? property.value
-            : undefined
+            : node.computed &&
+                property.type === "UnaryExpression" &&
+                property.operator === "-" &&
+                property.argument.type === "Literal" &&
+                typeof property.argument.value === "number" &&
+                Number.isFinite(property.argument.value)
+              ? -property.argument.value
+              : undefined
       if (object && key !== undefined)
         return keep(
           new SysConfigReference({ path: [...object.path, key] }),
