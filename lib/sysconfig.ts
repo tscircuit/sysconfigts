@@ -88,12 +88,21 @@ export class SysConfig extends SysConfigNode {
   }
   add<T extends SysConfigNode>(node: T): T {
     // A semicolon also prevents ASI hazards after arbitrary preserved JavaScript.
-    if (this.nodes.length)
-      this.nodes.push(
-        new SysConfigTrivia({
-          text: this.getString().trimEnd().endsWith(";") ? "\n" : "\n;\n",
-        }),
-      )
+    const lastStatement = this.nodes.findLast(
+      (existing) => !(existing instanceof SysConfigTrivia),
+    )
+    if (!lastStatement) {
+      const current = this.getString()
+      if (current.length > 0 && !/[\r\n]$/.test(current)) {
+        this.nodes.push(new SysConfigTrivia({ text: "\n" }))
+      }
+    } else if (lastStatement.toSource().trimEnd().endsWith(";")) {
+      if (!/[\r\n]$/.test(this.getString())) {
+        this.nodes.push(new SysConfigTrivia({ text: "\n" }))
+      }
+    } else {
+      this.nodes.push(new SysConfigTrivia({ text: "\n;\n" }))
+    }
     this.nodes.push(node)
     return node
   }

@@ -31,6 +31,48 @@ export class SysConfigLiteral extends SysConfigExpression {
   }
 }
 
+const IDENTIFIER_PATTERN = /^[$_\p{ID_Start}][$_\p{ID_Continue}]*$/u
+const RESERVED_IDENTIFIERS = new Set([
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "new",
+  "null",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+])
+
 /** Static identifier/property paths, including $assign and array indices. */
 export class SysConfigReference extends SysConfigExpression {
   readonly type = "reference"
@@ -44,25 +86,36 @@ export class SysConfigReference extends SysConfigExpression {
     return []
   }
   protected signature(): string {
-    return JSON.stringify(this.path)
+    return JSON.stringify(
+      this.path.map((key) => (Object.is(key, -0) ? "-0" : key)),
+    )
   }
   protected render(): string {
     const [head, ...tail] = this.path
-    if (typeof head !== "string" || !/^[$A-Z_a-z][$\w]*$/.test(head))
+    if (
+      typeof head !== "string" ||
+      !IDENTIFIER_PATTERN.test(head) ||
+      RESERVED_IDENTIFIERS.has(head)
+    )
       throw new TypeError("A reference must start with an identifier")
     return (
       head +
       tail
-        .map((key) =>
-          typeof key === "string" && /^[$A-Z_a-z][$\w]*$/.test(key)
+        .map((key) => {
+          if (typeof key === "number") {
+            if (!Number.isFinite(key))
+              throw new TypeError("SysConfig numbers must be finite")
+            return `[${Object.is(key, -0) ? "-0" : JSON.stringify(key)}]`
+          }
+          return IDENTIFIER_PATTERN.test(key)
             ? `.${key}`
-            : `[${JSON.stringify(key)}]`,
-        )
+            : `[${JSON.stringify(key)}]`
+        })
         .join("")
     )
   }
   equals(other: SysConfigReference): boolean {
-    return JSON.stringify(this.path) === JSON.stringify(other.path)
+    return this.signature() === other.signature()
   }
 }
 
