@@ -141,6 +141,15 @@ describe("typed authoring and inspection", () => {
       toExpression({ a: [true, null], z: 1 }).toSource(),
     )
   })
+  test("Unicode references can be edited and rendered", () => {
+    const reference = new SysConfigReference({ path: "π.gpioPin.$assign" })
+    expect(reference.toSource()).toBe("π.gpioPin.$assign")
+
+    const doc = parseSysConfig('π.gpioPin.$assign = "DIO8";')
+    doc.assignments[0]!.target.path[1] = "otherPin"
+    expect(doc.getString()).toBe('π.otherPin.$assign = "DIO8";')
+  })
+
   test("static bracket references do not collide with dotted references", () => {
     const doc = parseSysConfig(
       'a["x.y"] = 1; a.x.y = 2; a.items[0].$assign = "PIN0";',

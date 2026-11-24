@@ -1,6 +1,24 @@
 import { SysConfigNode } from "./base-node"
 
 export abstract class SysConfigExpression extends SysConfigNode {}
+
+const IDENTIFIER_START = /^[$_\p{ID_Start}]$/u
+const IDENTIFIER_PART = /^[$_\p{ID_Continue}]$/u
+
+function isIdentifier(text: string): boolean {
+  const [first, ...rest] = [...text]
+  return (
+    first !== undefined &&
+    IDENTIFIER_START.test(first) &&
+    rest.every(
+      (character) =>
+        IDENTIFIER_PART.test(character) ||
+        character === "\u200c" ||
+        character === "\u200d",
+    )
+  )
+}
+
 export type SysConfigPrimitive = string | number | boolean | null
 export type SysConfigValueInput =
   | SysConfigPrimitive
@@ -48,13 +66,13 @@ export class SysConfigReference extends SysConfigExpression {
   }
   protected render(): string {
     const [head, ...tail] = this.path
-    if (typeof head !== "string" || !/^[$A-Z_a-z][$\w]*$/.test(head))
+    if (typeof head !== "string" || !isIdentifier(head))
       throw new TypeError("A reference must start with an identifier")
     return (
       head +
       tail
         .map((key) =>
-          typeof key === "string" && /^[$A-Z_a-z][$\w]*$/.test(key)
+          typeof key === "string" && isIdentifier(key)
             ? `.${key}`
             : `[${JSON.stringify(key)}]`,
         )
